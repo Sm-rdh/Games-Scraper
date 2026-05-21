@@ -1,0 +1,1 @@
+# Routers registered here in Milestone 4 (FastAPI integration)
