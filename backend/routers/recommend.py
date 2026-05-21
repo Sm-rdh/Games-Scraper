@@ -1,7 +1,10 @@
 """
 recommend.py — FastAPI router for the recommendation endpoint.
 """
-
+import json
+from fastapi.responses import JSONResponse
+from config import settings
+from scrapers.scraper_runner import run_all_scrapers
 from fastapi import APIRouter, HTTPException
 from models.quiz     import QuizAnswers, QUIZ_QUESTIONS
 from ml.pipeline     import get_recommendations, reload_data
@@ -38,3 +41,22 @@ async def reload_game_data():
     """Force reload of scraped data into the recommender cache."""
     summary = reload_data()
     return {"status": "reloaded", **summary}
+
+@router.get("/manifest")
+async def get_manifest():
+    """Returns stats from the last scrape run."""
+    manifest_path = settings.PROCESSED_DATA_DIR / "scrape_manifest.json"
+    if not manifest_path.exists():
+        return {"steam_count": 0, "epic_count": 0, "scraped_at": None}
+    with open(manifest_path) as f:
+        return json.load(f)
+
+
+@router.post("/scrape")
+async def trigger_scrape():
+    """Re-runs the full scraper pipeline."""
+    try:
+        manifest = run_all_scrapers()
+        return manifest
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

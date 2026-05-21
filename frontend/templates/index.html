@@ -4,25 +4,151 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>games-scraper</title>
-  <style>
-    body {
-      margin: 0;
-      background: #000;
-      color: #e0e0e0;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    h1 { color: #2dd4bf; letter-spacing: 2px; }
-    p  { color: #a09080; }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 <body>
-  <div style="text-align:center">
-    <h1>⚡ games-scraper</h1>
-    <p>Backend is live — UI coming in Milestone 4.</p>
+
+  <!-- ── QUIZ SCREEN ─────────────────────────────────────────── -->
+  <div id="screen-quiz" class="screen active">
+
+    <!-- Top bar -->
+    <header class="quiz-header">
+      <span class="logo">GAMES<span class="accent">—</span>SCRAPER</span>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <span class="progress-label" id="progress-label">1 / 4</span>
+    </header>
+
+    <!-- Question area -->
+    <main class="quiz-main">
+      <div class="question-block" id="question-block">
+        <p class="question-number" id="question-number">QUESTION 01</p>
+        <h1 class="question-text" id="question-text">Loading...</h1>
+        <div class="options-grid" id="options-grid"></div>
+      </div>
+    </main>
+
+    <!-- Bottom nav -->
+    <footer class="quiz-footer">
+      <button class="btn-ghost" id="btn-back" onclick="quizBack()">← BACK</button>
+      <button class="btn-primary" id="btn-next" onclick="quizNext()" disabled>
+        NEXT →
+      </button>
+    </footer>
+
   </div>
+
+
+  <!-- ── LOADING SCREEN ──────────────────────────────────────── -->
+  <div id="screen-loading" class="screen">
+    <div class="loader-wrap">
+      <div class="loader-ring"></div>
+      <p class="loader-text">FINDING YOUR GAMES</p>
+      <p class="loader-sub">Running Weighted KNN...</p>
+    </div>
+  </div>
+
+
+  <!-- ── DASHBOARD SCREEN ────────────────────────────────────── -->
+  <div id="screen-dashboard" class="screen">
+
+    <!-- Nav -->
+    <nav class="dash-nav">
+      <span class="logo">GAMES<span class="accent">—</span>SCRAPER</span>
+      <div class="nav-right">
+        <span class="nav-tag" id="dash-tag"></span>
+        <button class="btn-ghost-sm" onclick="resetQuiz()">RETAKE QUIZ</button>
+      </div>
+    </nav>
+
+    <!-- Hero banner -->
+    <div class="dash-hero">
+      <p class="hero-eyebrow">YOUR RECOMMENDATIONS</p>
+      <h1 class="hero-title" id="hero-title">TOP PICKS</h1>
+      <p class="hero-sub" id="hero-sub">Based on your preferences</p>
+    </div>
+
+    <!-- Game grid -->
+    <section class="game-grid" id="game-grid">
+      <!-- Cards injected by JS -->
+    </section>
+
+    <!-- ── MANAGE FILES — anchored bottom left ── -->
+    <div class="manage-files" id="manage-files">
+      <button class="manage-toggle" onclick="toggleManage()">
+        <span class="manage-icon">⬡</span>
+        <span>MANAGE FILES</span>
+      </button>
+      <div class="manage-panel" id="manage-panel">
+        <p class="manage-title">LOCAL DATASETS</p>
+        <div class="manage-actions">
+          <button class="manage-btn" onclick="triggerScrape()">
+            <span>↺</span> RE-SCRAPE DATA
+          </button>
+          <button class="manage-btn" onclick="reloadData()">
+            <span>⟳</span> RELOAD INTO MODEL
+          </button>
+        </div>
+        <div class="manage-stats" id="manage-stats">
+          <div class="stat-row">
+            <span class="stat-label">Steam games</span>
+            <span class="stat-val" id="stat-steam">—</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Epic games</span>
+            <span class="stat-val" id="stat-epic">—</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Last scraped</span>
+            <span class="stat-val" id="stat-date">—</span>
+          </div>
+        </div>
+        <div class="manage-status" id="manage-status"></div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ── GAME DETAIL MODAL ────────────────────────────────────── -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-image-wrap">
+        <img class="modal-image" id="modal-image" src="" alt="" />
+        <div class="modal-score-badge" id="modal-score"></div>
+      </div>
+      <div class="modal-body">
+        <p class="modal-source" id="modal-source"></p>
+        <h2 class="modal-title" id="modal-title"></h2>
+        <p class="modal-desc"  id="modal-desc"></p>
+        <div class="modal-tags" id="modal-tags"></div>
+        <div class="modal-meta">
+          <div class="meta-item">
+            <span class="meta-label">PRICE</span>
+            <span class="meta-val" id="modal-price"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">PACING</span>
+            <span class="meta-val" id="modal-pacing"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">ART STYLE</span>
+            <span class="meta-val" id="modal-art"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">PLATFORMS</span>
+            <span class="meta-val" id="modal-platforms"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
 </body>
 </html>
